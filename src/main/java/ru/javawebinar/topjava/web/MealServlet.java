@@ -1,11 +1,13 @@
 package ru.javawebinar.topjava.web;
 
 import org.slf4j.Logger;
+import ru.javawebinar.topjava.dao.MealDao;
+import ru.javawebinar.topjava.dao.MealDaoImpl;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.model.MealWithExceed;
 import ru.javawebinar.topjava.util.MealsUtil;
 
-import javax.servlet.ServletConfig;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -14,8 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.Month;
-import java.util.Arrays;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -25,27 +26,58 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class MealServlet extends HttpServlet{
     private static final Logger LOG = getLogger(MealServlet.class);
+    private MealDao dao = new MealDaoImpl();
 
-    List<Meal> meals;
-    List<MealWithExceed> mealsWithExceeded;
+    private static final String MEAL_LIST = "/meals.jsp";
+    private static final String UPDATE_OR_CREATE = "/meal.jsp";
+    private static final String dateTimeFormat = "yyyy-MM-dd HH:mm";
 
-    @Override
-    public void init(ServletConfig config) throws ServletException {
-        super.init(config);
-        meals = Arrays.asList(
-                new Meal(LocalDateTime.of(2015, Month.MAY, 30, 10, 0), "Breakfast", 500),
-                new Meal(LocalDateTime.of(2015, Month.MAY, 30, 13, 0), "Lunch", 1000),
-                new Meal(LocalDateTime.of(2015, Month.MAY, 30, 20, 0), "Dinner", 500),
-                new Meal(LocalDateTime.of(2015, Month.MAY, 31, 10, 0), "Breakfast", 1000),
-                new Meal(LocalDateTime.of(2015, Month.MAY, 31, 13, 0), "Lunch", 500),
-                new Meal(LocalDateTime.of(2015, Month.MAY, 31, 20, 0), "Dinner", 510)
-        );
-         mealsWithExceeded = MealsUtil.getFilteredWithExceeded(meals, LocalTime.of(0, 0), LocalTime.of(23, 0), 2000);
+    private List<MealWithExceed> getListWithExceed(){
+        return MealsUtil.getFilteredWithExceeded(dao.readAll(), LocalTime.of(0, 0), LocalTime.of(23, 59), 2000);
     }
 
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        LOG.debug("redirect to meals");
-        req.setAttribute("meals", mealsWithExceeded);
-        req.getRequestDispatcher("/meals.jsp").forward(req,resp);
+        String action = req.getParameter("action");
+        if (action == null || action.isEmpty()){
+            req.setAttribute("meals",getListWithExceed());
+            req.getRequestDispatcher(MEAL_LIST).forward(req,resp);
+        }
+
+        String forward = "";
+        switch (action.toLowerCase()){
+            case "create":
+                forward = UPDATE_OR_CREATE;
+                break;
+            case "delete":
+                dao.delete(Long.parseLong(req.getParameter("id")));
+                forward = MEAL_LIST;
+                req.setAttribute("meals", getListWithExceed());
+                break;
+            case "update":
+                forward = UPDATE_OR_CREATE;
+                Meal meal = dao.getMealById(Long.parseLong(req.getParameter("id")));
+                req.setAttribute("meal", meal);
+                break;
+        }
+
+        req.getRequestDispatcher(forward).forward(req, resp);
+    }
+
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        req.setCharacterEncoding("UTF-8");
+
+        Long id = Long.parseLong(req.getParameter("id") == null || req.getParameter("id").isEmpty()? "0" : req.getParameter("id"));
+        LocalDateTime time = LocalDateTime.parse(req.getParameter("time"), DateTimeFormatter.ofPattern(dateTimeFormat));
+        String description = req.getParameter("description");
+        int calories = Integer.parseInt(req.getParameter("calories"));
+
+        Meal meal = new Meal(id, time, description, calories);
+        if (meal.getId().equals(0L)){
+            dao.create(meal);
+        } else {
+            dao.update(meal);
+        }
+        req.setAttribute("meals",getListWithExceed());
+        req.getRequestDispatcher(MEAL_LIST).forward(req,resp);
     }
 }
