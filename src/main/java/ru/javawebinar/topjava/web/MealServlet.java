@@ -24,7 +24,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * Created by Marisha on 11/12/16.
  */
-public class MealServlet extends HttpServlet{
+public class MealServlet extends HttpServlet {
     private static final Logger LOG = getLogger(MealServlet.class);
     private MealDao dao = new MealDaoImpl();
 
@@ -32,19 +32,19 @@ public class MealServlet extends HttpServlet{
     private static final String UPDATE_OR_CREATE = "/meal.jsp";
     private static final String dateTimeFormat = "yyyy-MM-dd HH:mm";
 
-    private List<MealWithExceed> getListWithExceed(){
-        return MealsUtil.getFilteredWithExceeded(dao.readAll(), LocalTime.of(0, 0), LocalTime.of(23, 59), 2000);
+    private List<MealWithExceed> getListWithExceed() {
+        return MealsUtil.getFilteredWithExceeded(dao.readAll(), LocalTime.MIN, LocalTime.MAX, 2000);
     }
 
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String action = req.getParameter("action");
-        if (action == null || action.isEmpty()){
-            req.setAttribute("meals",getListWithExceed());
-            req.getRequestDispatcher(MEAL_LIST).forward(req,resp);
+        if (action == null || action.isEmpty()) {
+            req.setAttribute("meals", getListWithExceed());
+            req.getRequestDispatcher(MEAL_LIST).forward(req, resp);
         }
 
         String forward = "";
-        switch (action.toLowerCase()){
+        switch (action.toLowerCase()) {
             case "create":
                 forward = UPDATE_OR_CREATE;
                 break;
@@ -55,9 +55,12 @@ public class MealServlet extends HttpServlet{
                 break;
             case "update":
                 forward = UPDATE_OR_CREATE;
-                Meal meal = dao.getMealById(Long.parseLong(req.getParameter("id")));
+                Meal meal = dao.getById(Long.parseLong(req.getParameter("id")));
                 req.setAttribute("meal", meal);
                 break;
+            default:
+                req.setAttribute("meals", getListWithExceed());
+                forward = MEAL_LIST;
         }
 
         req.getRequestDispatcher(forward).forward(req, resp);
@@ -66,18 +69,18 @@ public class MealServlet extends HttpServlet{
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
 
-        Long id = Long.parseLong(req.getParameter("id") == null || req.getParameter("id").isEmpty()? "0" : req.getParameter("id"));
+        Long id = Long.parseLong(req.getParameter("id") == null || req.getParameter("id").isEmpty() ? "-1" : req.getParameter("id"));
         LocalDateTime time = LocalDateTime.parse(req.getParameter("time"), DateTimeFormatter.ofPattern(dateTimeFormat));
         String description = req.getParameter("description");
         int calories = Integer.parseInt(req.getParameter("calories"));
 
         Meal meal = new Meal(id, time, description, calories);
-        if (meal.getId().equals(0L)){
+        if (meal.getId().equals(-1L)) {
             dao.create(meal);
         } else {
             dao.update(meal);
         }
-        req.setAttribute("meals",getListWithExceed());
-        req.getRequestDispatcher(MEAL_LIST).forward(req,resp);
+        req.setAttribute("meals", getListWithExceed());
+        req.getRequestDispatcher(MEAL_LIST).forward(req, resp);
     }
 }

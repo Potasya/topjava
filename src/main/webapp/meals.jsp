@@ -10,8 +10,13 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <style>
-    .green{color: green}
-    .red{color: red}
+    .green {
+        color: green
+    }
+
+    .red {
+        color: red
+    }
 </style>
 
 <html>
@@ -24,7 +29,6 @@
 <table border=1 cellpadding=5 cellspacing=0>
     <thead align="center" style="font-weight:bold">
     <tr>
-        <th>Id</th>
         <th>Description</th>
         <th>Calories</th>
         <th>Time</th>
@@ -34,10 +38,9 @@
     <tbody>
     <c:forEach items="${requestScope.meals}" var="meal">
         <tr class="${meal.exceed == false ? 'green':'red'}">
-            <td><c:out value="${meal.id}" /></td>
-            <td><c:out value="${meal.description}" /></td>
-            <td><c:out value="${meal.calories}" /></td>
-            <td><c:out value="${fn:replace(meal.dateTime, 'T', ' ')}" /></td>
+            <td><c:out value="${meal.description}"/></td>
+            <td><c:out value="${meal.calories}"/></td>
+            <td><c:out value="${fn:replace(meal.dateTime, 'T', ' ')}"/></td>
             <td><a href="meals?action=update&id=<c:out value="${meal.id}"/>"> Update </a></td>
             <td><a href="meals?action=delete&id=<c:out value="${meal.id}"/>"> Delete </a></td>
         </tr>

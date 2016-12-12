@@ -4,54 +4,55 @@ import ru.javawebinar.topjava.model.Meal;
 
 import java.time.LocalDateTime;
 import java.time.Month;
-import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 /**
  * Created by Marisha on 11/12/16.
  */
-public class MealDaoImpl implements MealDao{
+public class MealDaoImpl implements MealDao {
 
-    private static List<Meal> meals = new CopyOnWriteArrayList<>(Arrays.asList(
-            new Meal(100L, LocalDateTime.of(2015, Month.MAY, 30, 10, 0), "Breakfast", 500),
-            new Meal(101L, LocalDateTime.of(2015, Month.MAY, 30, 13, 0), "Lunch", 1000),
-            new Meal(102L, LocalDateTime.of(2015, Month.MAY, 30, 20, 0), "Dinner", 500),
-            new Meal(103L, LocalDateTime.of(2015, Month.MAY, 31, 10, 0), "Breakfast", 1000),
-            new Meal(104L, LocalDateTime.of(2015, Month.MAY, 31, 13, 0), "Lunch", 500),
-            new Meal(105L, LocalDateTime.of(2015, Month.MAY, 31, 20, 0), "Dinner", 510)));
+    private static Map<Long, Meal> meals = new ConcurrentHashMap<>();
+
+    static {
+        meals.put(100L, new Meal(100L, LocalDateTime.of(2015, Month.MAY, 30, 10, 0), "Breakfast", 500));
+        meals.put(101L, new Meal(101L, LocalDateTime.of(2015, Month.MAY, 30, 13, 0), "Lunch", 1000));
+        meals.put(102L, new Meal(102L, LocalDateTime.of(2015, Month.MAY, 30, 20, 0), "Dinner", 500));
+        meals.put(103L, new Meal(103L, LocalDateTime.of(2015, Month.MAY, 31, 10, 0), "Breakfast", 1000));
+        meals.put(104L, new Meal(104L, LocalDateTime.of(2015, Month.MAY, 31, 13, 0), "Lunch", 500));
+        meals.put(105L, new Meal(105L, LocalDateTime.of(2015, Month.MAY, 31, 20, 0), "Dinner", 510));
+    }
 
     private static AtomicLong idGenerator = new AtomicLong(0);
 
     @Override
-    public Meal getMealById(Long id){
-        for (Meal m: meals)
-            if (m.getId().equals(id))
-                return m;
-        return null;
+    public Meal getById(Long id) {
+        return meals.get(id);
     }
 
     @Override
-    public Long create(Meal meal) {
+    public void create(Meal meal) {
         meal.setId(idGenerator.getAndIncrement());
-        meals.add(meal);
-        return meal.getId();
+        meals.put(meal.getId(), meal);
     }
 
     @Override
     public void delete(Long id) {
-        meals.remove(getMealById(id));
+        meals.remove(id);
     }
 
     @Override
     public List<Meal> readAll() {
-        return meals;
+        return meals.entrySet().stream()
+                .map(x -> x.getValue())
+                .collect(Collectors.toList());
     }
 
     @Override
     public void update(Meal meal) {
-        delete(meal.getId());
-        create(meal);
+        meals.put(meal.getId(), meal);
     }
 }

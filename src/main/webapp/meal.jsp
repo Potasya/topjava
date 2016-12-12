@@ -19,9 +19,9 @@
     description : <input type="text" name="description"
                          value="<c:out value="${meal.description}"/>"/> <br/>
     calories : <input type="text" name="calories"
-                         value="<c:out value="${meal.calories}"/>"/> <br/>
-    time : <input type="date" name="time"
-                         value="<c:out value="${fn:replace(meal.dateTime, 'T', ' ')}"/>"/> <br/>
+                      value="<c:out value="${meal.calories}"/>"/> <br/>
+    time : <input type="datetime" name="time"
+                  value="<c:out value="${fn:replace(meal.dateTime, 'T', ' ')}"/>"/> <br/>
     <input type="submit" value="Submit"/>
 </form>
 </body>
