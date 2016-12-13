@@ -29,6 +29,7 @@
 <table border=1 cellpadding=5 cellspacing=0>
     <thead align="center" style="font-weight:bold">
     <tr>
+        <th hidden>Id</th>
         <th>Description</th>
         <th>Calories</th>
         <th>Time</th>
@@ -38,6 +39,7 @@
     <tbody>
     <c:forEach items="${requestScope.meals}" var="meal">
         <tr class="${meal.exceed == false ? 'green':'red'}">
+            <td hidden><c:out value="${meal.id}"/></td>
             <td><c:out value="${meal.description}"/></td>
             <td><c:out value="${meal.calories}"/></td>
             <td><c:out value="${fn:replace(meal.dateTime, 'T', ' ')}"/></td>
